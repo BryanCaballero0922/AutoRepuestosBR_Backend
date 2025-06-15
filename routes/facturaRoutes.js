@@ -1,14 +1,16 @@
 const express = require('express');
+const {
+  getAllFacturas,
+  createFactura,
+  updateFactura,
+  deleteFactura
+} = require('../controllers/facturaControllers');
+
 const router = express.Router();
 
-const facturaControllers = require('../controllers/facturaControllers'); // Ajusta el nombre del archivo si es otro
+router.get('/allFacturas', getAllFacturas);
+router.post('/newFactura', createFactura);
+router.put('/updateFactura/:rtn', updateFactura);
+router.delete('/deleteFactura/:rtn', deleteFactura);
 
-// Obtener todas las facturas
-router.get('/', facturaControllers.getAllFacturas);
-// Crear una nueva factura
-router.post('/', facturaControllers.createFactura);
-// Actualizar una factura por ID
-router.put('/:id', facturaControllers.updateFactura);
-// Eliminar una factura por ID
-router.delete('/:id', facturaControllers.deleteFactura);
 module.exports = router;

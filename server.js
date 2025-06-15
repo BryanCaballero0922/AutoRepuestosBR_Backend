@@ -7,7 +7,8 @@ app.use(cors());
 app.use(express.json());
 
 //Rutas
-app.use('/api/auth', require('./routes/clubRoutes'));
+app.use('/api/club', require('./routes/clubRoutes'));
+app.use('/api/factura', require('./routes/facturaRoutes'));
 
 const PORT = process.env.PORT || 3001;
 app.listen(

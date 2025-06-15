@@ -1,8 +1,7 @@
-const supabaseAdmin = require('../supabaseClient');
-const {createClient} = require('@supabase/supabase-js');
+const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
-const supabase = createClient(
+const supabaseAnonClient = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
@@ -10,12 +9,15 @@ const supabase = createClient(
 // Obtener todos los clientes del club
 exports.getAllClub = async (req, res) => {
   try {
-    const { data, error } = await supabase.from('club').select('*');
+    const { data, error } = await supabaseAnonClient
+      .from('club')
+      .select('*');
     if (error) throw error;
     res.status(200).json({ data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
+  return res;
 };
 
 // Registrar nuevo cliente en el club
@@ -23,48 +25,57 @@ exports.createClub = async (req, res) => {
   try {
     const { nombre, telefono, descripcion, edad, taller } = req.body;
 
-    const { data, error } = await supabase.from('club').insert([
-      { nombre, telefono, descripcion, edad, taller }
-    ]);
+    const { data, error } = await supabaseAnonClient
+      .from('club')
+      .insert({
+        nombre,
+        telefono,
+        descripcion,
+        edad,
+        taller
+      });
 
     if (error) throw error;
     res.status(201).json({ data });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(err.status || 400).json({ error: err.message });
   }
+  return res;
 };
 
-// Actualizar cliente del club por ID
+// Actualizar cliente del club por TALLER
 exports.updateClub = async (req, res) => {
   try {
-    const id = req.params.id;
-    const campos = req.body;
+    const { taller } = req.params;
+    const { nombre, telefono, descripcion, edad } = req.body;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAnonClient
       .from('club')
-      .update(campos)
-      .eq('id', id);
+      .update({ nombre, telefono, descripcion, edad })
+      .eq('taller', taller);
 
     if (error) throw error;
     res.status(200).json({ data });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(err.status || 400).json({ error: err.message });
   }
+  return res;
 };
 
-// Eliminar cliente del club por ID
+// Eliminar cliente del club por TALLER
 exports.deleteClub = async (req, res) => {
   try {
-    const id = req.params.id;
+    const { taller } = req.params;
 
-    const { data, error } = await supabase
+    const { error } = await supabaseAnonClient
       .from('club')
       .delete()
-      .eq('id', id);
+      .eq('taller', taller);
 
     if (error) throw error;
-    res.status(200).json({ data });
+    res.status(204).send(); // No content
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(err.status || 400).json({ error: err.message });
   }
+  return res;
 };

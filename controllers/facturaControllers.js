@@ -104,3 +104,50 @@ exports.deleteFactura = async (req, res) => {
   }
   return res;
 };
+
+exports.guardarFacturaCompleta = async (req, res) => {
+  const { customerData, items, total } = req.body;
+
+  if (!customerData || !items || items.length === 0 || !total) {
+    return res.status(400).json({ error: 'Faltan datos para crear la factura.' });
+  }
+
+  try {
+    // 1. Insertar en la tabla maestra 'invoices' y obtener el ID de la nueva factura
+    const { data: invoice, error: invoiceError } = await supabaseAnonClient
+      .from('invoices')
+      .insert({
+        customer_name: customerData.nombre,
+        customer_rtn: customerData.rtn,
+        total_amount: total,
+      })
+      .select('id')
+      .single(); // .single() para obtener el objeto directamente
+
+    if (invoiceError) throw invoiceError;
+
+    const newInvoiceId = invoice.id;
+
+    // 2. Preparar los items del detalle, añadiendo el ID de la factura a cada uno
+    const itemsToInsert = items.map(item => ({
+      invoice_id: newInvoiceId,
+      product_name: item.name,
+      quantity: item.cantidad || 1,
+      unit_price: Number(String(item.price).replace('$', '')),
+      subtotal: Number(String(item.price).replace('$', '')) * (item.cantidad || 1),
+    }));
+
+    // 3. Insertar todos los items en la tabla 'invoice_items'
+    const { error: itemsError } = await supabaseAnonClient
+      .from('invoice_items')
+      .insert(itemsToInsert);
+
+    if (itemsError) throw itemsError;
+
+    res.status(201).json({ message: 'Factura guardada exitosamente.', invoiceId: newInvoiceId });
+
+  } catch (err) {
+    console.error("Error al guardar factura:", err);
+    res.status(500).json({ error: 'Error interno al guardar la factura.', details: err.message });
+  }
+};
